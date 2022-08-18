@@ -1,0 +1,10 @@
+{
+  "extends": "eslint-config-egg",
+  "root": true
+  // "index": 2
+  // "rules": {
+  //   "no-console": "off",
+  //   "no-irregular-whitespace": "off",
+  //   "no-trailing-spaces": "off"
+  // }
+}

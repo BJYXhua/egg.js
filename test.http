@@ -1,0 +1,11 @@
+# 模拟post发送请求
+POST http://127.0.0.1:7001/newRequest
+# Content-Type: application/x-www-form-urlencoded
+# name=linpinghua
+
+Content-Type: application/json
+# token
+token:'bjyx'
+
+# 也可以使用JSON格式进行上传
+{"id":888,"name":"博君一肖"}

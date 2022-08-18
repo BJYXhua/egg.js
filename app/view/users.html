@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 引入css -->
+  <link rel="stylesheet" type="text/css" href="public/css/default.css">
+  <title>ejs的使用</title>
+</head>
+
+<body>
+  <!-- 引入公用 其他html模板 -->
+  <%- include ('header.html') -%>
+  <div>
+    <button onclick="add()">增加Cookie</button>
+    <button onclick="del()">删除Cookie</button>
+    <button onclick="editor('bjyx')">修改Cookie</button>
+    <button onclick="show()">查询Cookie</button>
+  </div>
+  现在时间：<%= nowTime%>
+  <h1>I am <%=name%></h1>
+  <p>session数据---username:<%= username%></p>
+  <ul>
+    <li>id:<%=id%></li>
+    <li>姓名:<%=name%></li>
+    <li>年龄:<%=age%></li>
+    <li>专业技能:
+      <ul>
+        <% for(var i=0;i<skills.length;i++){ %>
+        <li><%=skills[i] %></li>
+        <%}%>
+      </ul>
+    </li>
+  </ul>
+  <script>
+    function add(){
+      fetch('/add',{
+        method:"post",
+        headers:{
+          "Content-type":"application/json"
+        }
+      });
+    }
+    function del(){
+      fetch('/del',{
+        method:"post",
+        headers:{
+          "Content-type":"application/json"
+        }
+      });
+    }
+    function editor(user){
+      fetch(`editor/${user}`,{
+        method:"post",
+        headers:{
+          "Content-type":"application/json"
+        }
+      });
+    }
+    function show(){
+      fetch('/show',{
+        method:"post",
+        headers:{
+          "Content-type":"application/json"
+        }
+      });
+    }
+  </script>
+</body>
+
+</html>
