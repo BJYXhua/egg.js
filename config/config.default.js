@@ -1,6 +1,6 @@
 /* eslint valid-jsdoc: "off" */
 
-'use strict';
+'use strict'
 
 /**
  * @param {Egg.EggAppInfo} appInfo app info
@@ -10,7 +10,7 @@ module.exports = appInfo => {
    * built-in config
    * @type {Egg.EggAppConfig}
    **/
-  const config = exports = {};
+  const config = exports = {}
 
   // 配置mysql
   config.mysql = {
@@ -22,27 +22,41 @@ module.exports = appInfo => {
       host: '127.0.0.1',
       port: '3306',
       user: 'root',
-      password: 'BJYXszd105805',
+      // password: 'BJYXszd105805',
+      password: '20000521',
       database: 'test_egg',
     },
-  };
+  }
 
+  // 配置mongoose 
+  // config.mongoose = {
+  //   url: 'mongodb://localhost:27017/egg_user',
+  //   options: {
+  //     useUnifiedTopology: true,
+  //   }
+  // }
+  exports.mongoose = {
+    url: 'mongodb://127.0.0.1/egg_user',
+    options: {
+      useUnifiedTopology: true,
+    }
+  }
   // 安全设置解除csrf安全策略
   config.security = {
     csrf: {
       enable: false,
     },
-  };
+  }
   // 配置ejs
   config.view = {
     mapping: {
       '.html': 'ejs',
     },
-  };
+  }
   config.ejs = {
     // 配置ejs <% %>改为<$ $>,最好不要改
     // delimiter: '$',
-  };
+  }
   // 配置静态文件的前缀,最好不要改
   // config.static = {
   //   prefix: '/assets/',
@@ -57,23 +71,23 @@ module.exports = appInfo => {
     maxAge: 1000 * 60,
     // 页面有访问动作，自动刷新时间
     renew: true,
-  };
+  }
   // use for cookie sign key, should change to your own and keep security
-  config.keys = appInfo.name + '_1660550059714_7153';
+  config.keys = appInfo.name + '_1660550059714_7153'
 
   // add your middleware config here
   // 设置配置全局中间件
   // eslint-disable-next-line array-bracket-spacing
-  config.middleware = [];
+  config.middleware = []
 
   // add your user config here
   const userConfig = {
     // myAppName: 'egg',
-  };
+  }
 
   return {
     ...config,
     ...userConfig,
-  };
+  }
 
-};
+}

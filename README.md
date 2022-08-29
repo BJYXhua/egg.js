@@ -1151,6 +1151,331 @@ router.get("/updataUser", controller.customers.updataUser);
 router.get("/getUsers", controller.customers.getUsers);
 ```
 
+## Egg.js 操作 egg-mongoose 数据库
+
+### 安装
+
+```bash
+$ npm i egg-mongoose --save
+```
+
+### 配置 /config/config.defaultjs
+
+```js
+// 配置mongoose
+// config.mongoose = {
+//   url: 'mongodb://localhost:27017/egg_user',
+//   options: {
+//     useUnifiedTopology: true,
+//   }
+// }
+exports.mongoose = {
+  // egg_user数据库名
+  url: "mongodb://127.0.0.1/egg_user",
+  options: {
+    useUnifiedTopology: true,
+  },
+};
+```
+
+### 配置 /config/plugin.js
+
+```js
+exports.mongoose = {
+  enable: true,
+  package: "egg-mongoose",
+};
+```
+
+### 定义数据表
+
+在/app 下新建一个 model 文件夹，存放 mongoose 数据表
+
+type 表示字段类型，Mongoose 有以下几种类型 Number（数字），String（字符串），Boolean（布尔值），ObjectId（对象 ID），Array（数组），Object（对象），Date（日期)......
+
+/app/model/user.js
+
+```js
+"use strict"
+module.exports = (app) => {
+  const mongoose = app.mongoose
+  const Schema = mongoose.Schema
+  const UserSchema = new Schema({
+    name: { type: String },
+    age: { type: Number },
+    skill: { type: String },
+    time: { type: Date }
+  })
+  //mongoose.model(被调用命名，UserSchema，表名)
+  return mongoose.model("User", UserSchema, 'users')
+```
+
+### 新建 service 文件来提供操作 mongoose增删改查
+
+#### 查询数据：
+
+返回的是数组=》
+
+```js
+this.ctx.model.xxx.find();
+```
+
+
+
+查询一条记录，返回一个对象=》this.ctx.model.xxx.findOne(id)
+
+#### 条件查询：
+
+```js
+this.ctx.model.Article.find(conditions,callback);
+```
+
+
+
+**其中conditions为查询的条件，callback为回调函数**
+
+##### conditions有一下几种情况：
+
+具体数据：
+
+```js
+this.ctx.model.Book.find
+(
+{_id：5c4a19fb87ba4002a47ac4d, name: "bjxy" 
+}
+, callback)
+;
+```
+
+##### 条件查询：
+
+```js
+"$lt" 小于
+"$lte" 小于等于
+"$gt" 大于
+"$gte" 大于等于
+"$ne" 不等于
+// 查询价格大于100小于200的书籍数组
+this.ctx.model.Book.find({ "price": { $get:100 , $lte:200 }); 
+```
+
+##### 或查询 OR
+
+```js
+"$in" 一个键对应多个值
+"$nin" 同上取反, 一个键不对应指定值
+"$or" 多个条件匹配, 可以嵌套 $in 使用
+"$not" 同上取反, 查询与特定模式不匹配的文档
+
+this.ctx.model.Book.find({"name":{ $in: ["射雕","倚天"]} );
+```
+
+#### 删除数据
+
+```js
+this.ctx.model.Book.remove(conditions,callback);
+```
+
+#### 更新数据
+
+```js
+this.ctx.model.Book.update(conditions, update, callback)
+```
+
+conditions为条件，update是更新的值对象
+
+#### 排序
+
+```js
+this.ctx.model.Book.sort({ create_time: -1 });
+```
+
+其中-1表示降序返回。 1表示升序返回
+
+#### 限制数量
+
+```js
+this.ctx.model.Book.limit(number);
+```
+
+number表示限制的个数
+
+#### 跳过文档返回
+
+```js
+this.ctx.model.Book.skip(number);
+```
+
+number表示跳过的个数,skip经常搭配limit实现分页的功能
+
+#### 条件数组and
+
+在find后面可使用and对查询结果进行进一步条件筛选，相当于并且的意思。
+
+```js
+const search_term = {
+ $or: [
+ { desc: { $regex: desc ? desc : '', $options: '$i' } },
+ { name: { $regex: desc ? desc : '', $options: '$i' } },
+ { author: { $regex: desc ? desc : '', $options: '$i' } },
+ { press: { $regex: desc ? desc : '', $options: '$i' } },
+ ],
+ };
+ this.ctx.model.Book.find().and(search_term)
+```
+
+#### 关联查询populate
+
+```js
+// 在model中配置字段时候指定关联的表名，就可以通过populate来进行表的关联查询
+user: { /* 书籍发布者id */
+ type: Schema.Types.ObjectId,
+ ref: 'User',
+ },
+ 
+this.ctx.model.Book.find()
+ .populate({
+ path: 'user',
+ select: { name: 1, image: 1 }
+ })
+```
+
+#### 聚合管道Aggregate
+
+```js
+this.ctx.model.Template.aggregate([
+ { $match: { name } },
+ { $sort: { create_time: -1 } },
+ { $group: { _id: '$name', user_id: { $first: '$modifier' } } },
+ ]);
+```
+
+Mongoose聚合管道aggregate常用的操作有$project 、$match 、$group、$sort、$limit、$skip、$lookup 表关联
+
+#### 批量操作bulkWrite
+
+```js
+const template_list = await ctx.model.Template.aggregate([
+ { $sort: { create_time: -1 } },
+ { $group: { _id: '$name', template_id: { $first: '$_id' }, label: { $first: '$label' } } },
+ ]);
+ const update_value = [];
+ template_list.forEach(item => {
+ if (!item.label) {
+ update_value.push({
+ updateOne: {
+ filter: { _id: item.template_id },
+ update: { label: '' },
+ },
+ });
+ }
+ });
+ await ctx.model.Template.bulkWrite(update_value);
+```
+
+### app/service/mongosoedb.js
+
+```js
+const Service = require("egg").Service;
+
+class mongoosedbService extends Service {
+  async getusers(name) {
+    if (name) {
+      return await this.ctx.model.User.findOne(name);
+    } else {
+      // 查询所有users字段数据
+      return await this.ctx.model.User.find();
+    }
+  }
+  // 增加
+  async addusers(query) {
+    return await this.ctx.model.User.create(query);
+  }
+  // 修改
+  async editusers(id, query) {
+    return await this.ctx.model.User.updateOne(id, query);
+  }
+  // 删除
+  async deluser(query) {
+    return await this.ctx.model.User.deleteOne(query);
+  }
+}
+module.exports = mongoosedbService;
+```
+
+### controller编写操作数据库
+
+app/controller/users.js
+
+```js
+// mongoose增删改查
+  // 查find
+  async getusers () {
+    const { ctx } = this
+    const res = await ctx.service.mongoosedb.getusers()
+    // console.log(res)
+    ctx.body = res
+  }
+  // 增加数据
+  async addusers () {
+    const { ctx } = this
+    const query = {
+      name: '博君一肖',
+      age: 3,
+      skill: "95天选",
+      time: new Date().getFullYear()
+    }
+    const name = { name: query.name }
+    const res = await ctx.service.mongoosedb.getusers(name)
+    const result = await ctx.service.mongoosedb.addusers(query)
+    if (result) {
+      ctx.body = res + ",添加数据成功！"
+    } else {
+      ctx.body = res + ",添加数据失败"
+    }
+  }
+  // 修改数据
+  async edituser () {
+    const { ctx } = this
+    const name = { name: "肖战" }
+    const query = { age: 31, skill: "设计师，演技，歌手,画手" }
+    const result = await ctx.service.mongoosedb.editusers(name, query)
+    if (result) {
+      const res = await ctx.service.mongoosedb.getusers(name)
+      ctx.body = res + ",修改数据成功！"
+    } else {
+      ctx.body = ",修改数据失败！"
+    }
+  }
+  // 删除数据
+  async deluser () {
+    const { ctx } = this
+    const name = { name: "博君一肖" }
+
+    const result = await ctx.service.mongoosedb.deluser(name)
+    console.log(result)
+
+    if (result.n === 1) {
+      const res = await ctx.service.mongoosedb.getusers()
+      ctx.body = res + ",删除数据成功！"
+    } else {
+      ctx.body = "删除数据失败！"
+    }
+  }
+```
+
+app/router.js添加路由
+
+```js
+  // mongoose
+  router.get('/users', controller.users.getusers)
+  router.get('/addusers', controller.users.addusers)
+  router.get('/edituser', controller.users.edituser)
+  router.get('/deluser', controller.users.deluser)
+```
+
+
+
 ## QuickStart
 
 <!-- add docs here for user -->
